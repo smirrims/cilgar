@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CILGAR — Cilia Gene Annotation Resource</title>
+<style>
+:root{--bg:#f7f8fa;--surface:#fff;--border:#e2e6ea;--border-strong:#c8ced6;--text:#1a1f27;--muted:#5a6472;--faint:#8c95a0;--accent:#1a6fb5;--accent-bg:#e8f1fb;--teal:#0f7a62;--teal-bg:#e2f5ef;--amber:#8a5d0a;--amber-bg:#fef3d8;--coral:#9c3520;--coral-bg:#fceae6;--purple:#5b42b5;--purple-bg:#eeebfd;--pink:#93305a;--pink-bg:#fce8f1;--gray:#4a5260;--gray-bg:#f0f1f3;--hh:64px;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+header{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);height:var(--hh);display:flex;align-items:center;padding:0 1.5rem;gap:1.25rem}
+.logo-name{font-size:1.3rem;font-weight:700;letter-spacing:-.5px}.logo-name span{color:var(--accent)}
+.logo-sub{font-size:.68rem;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
+.hstats{margin-left:auto;display:flex;gap:1.25rem}
+.hstat-n{font-size:1.05rem;font-weight:600}.hstat-l{font-size:.68rem;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
+.load-btn{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:500;cursor:pointer;border:none;white-space:nowrap}
+.load-btn:hover{background:#1560a0}
+#csv-input{display:none}
+.controls{background:var(--surface);border-bottom:1px solid var(--border);padding:9px 1.5rem;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sw{position:relative;flex:1;min-width:190px;max-width:320px}
+.sw svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--faint)}
+.sw input{width:100%;padding:7px 9px 7px 32px;border:1px solid var(--border-strong);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px}
+.sw input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,111,181,.12)}
+select{padding:7px 10px;border-radius:6px;border:1px solid var(--border-strong);background:var(--bg);color:var(--text);font-size:13px;cursor:pointer}
+select:focus{outline:none;border-color:var(--accent)}
+.clbl{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em;margin-right:-4px}
+.ftog{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border-strong);background:var(--bg);color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .12s}
+.ftog.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.rcount{margin-left:auto;font-size:12px;color:var(--faint);white-space:nowrap}
+.tw{overflow:auto;height:calc(100vh - 160px)}.tw.with-diagram{height:calc(100vh - 560px);min-height:220px}
+table{width:100%;border-collapse:collapse;min-width:1200px}
+thead{position:sticky;top:0;z-index:10}
+
+
+th{text-align:left;font-size:11px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;padding:8px 11px;background:var(--surface);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:var(--muted)}
+th.sa::after{content:' ↑'}th.sd::after{content:' ↓'}
+td{padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:#f4f7fb}
+tr.ann td{background:#fdfeff}tr.ann:hover td{background:#eef5fc}
+.gc{font-weight:600;font-size:13px}.gc a{color:var(--accent);text-decoration:none}.gc a:hover{text-decoration:underline}
+.ac{color:var(--muted);font-size:12px;max-width:210px}
+.fc{font-size:12px;color:var(--muted);max-width:180px}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;white-space:nowrap;line-height:1.6}
+.by{background:var(--teal-bg);color:var(--teal)}.bn{background:var(--gray-bg);color:var(--gray)}
+.btip{background:var(--accent-bg);color:var(--accent)}.bbase{background:var(--purple-bg);color:var(--purple)}
+.bax{background:var(--teal-bg);color:var(--teal)}.btz{background:var(--coral-bg);color:var(--coral)}
+.bift{background:var(--amber-bg);color:var(--amber)}.bdis{background:var(--pink-bg);color:var(--pink)}
+.be{color:var(--faint);font-size:12px}
+.ks{color:var(--coral);font-weight:500;font-size:12px}.km{color:var(--amber);font-size:12px}.kn{color:var(--faint);font-size:12px}
+.pl{font-size:11px;color:var(--accent);text-decoration:none;display:block}.pl:hover{text-decoration:underline}
+.cit{font-size:11px;color:var(--muted);display:block;margin-top:2px}
+.smsg{text-align:center;padding:4rem 2rem;color:var(--faint);font-size:14px}
+.smsg strong{display:block;font-size:1.05rem;margin-bottom:6px;color:var(--muted)}
+.pag{display:flex;align-items:center;justify-content:center;gap:6px;padding:1.1rem;border-top:1px solid var(--border);background:var(--surface);flex-wrap:wrap}
+.pb{padding:5px 11px;border-radius:5px;font-size:13px;border:1px solid var(--border-strong);background:var(--bg);color:var(--muted);cursor:pointer;transition:all .12s}
+.pb:hover:not(:disabled){background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+.pb.act{background:var(--accent);color:#fff;border-color:var(--accent)}.pb:disabled{opacity:.35;cursor:default}
+.pi{font-size:12px;color:var(--faint);margin:0 6px}
+.ov{display:none;position:fixed;inset:0;z-index:200;background:rgba(15,20,30,.5)}
+.ov.open{display:flex;align-items:flex-start;justify-content:flex-end}
+.dp{width:480px;max-width:95vw;height:100vh;overflow-y:auto;background:var(--surface);padding:1.75rem;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
+.dph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem}
+.dpg{font-size:1.5rem;font-weight:700}.dpa{font-size:.82rem;color:var(--muted);margin-top:2px}
+.cls{background:none;border:none;font-size:1.3rem;color:var(--faint);cursor:pointer;padding:4px}.cls:hover{color:var(--text)}
+.dps{margin-bottom:1.1rem}
+.dps h4{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:7px;border-bottom:1px solid var(--border);padding-bottom:3px}
+.dpr{display:flex;gap:1rem;margin-bottom:5px;font-size:13px}
+.drk{color:var(--muted);min-width:145px;flex-shrink:0}.drv{color:var(--text)}
+.ehi{font-size:11px;color:var(--faint);margin-top:1rem;padding:10px;background:var(--bg);border-radius:6px;border:1px dashed var(--border-strong)}
+.upload-zone{border:2px dashed var(--border-strong);border-radius:10px;padding:2rem;text-align:center;margin:0 1.5rem 1.5rem;cursor:pointer;transition:all .15s}
+.upload-zone:hover{border-color:var(--accent);background:var(--accent-bg)}
+.upload-zone p{color:var(--muted);font-size:14px;margin-top:8px}
+.upload-zone .big{font-size:2rem}
+.cilia-section{background:var(--surface);border-bottom:1px solid var(--border);padding:1.25rem 1.5rem 0.5rem}
+.cilia-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.cilia-subtitle{font-size:11px;color:var(--faint);margin-bottom:10px}
+.cilia-diagram-wrap{width:100%;overflow-x:auto}
+.cilia-svg{width:100%;max-width:520px;height:auto;display:block;margin:0 auto}
+footer{padding:1.25rem 1.5rem;border-top:1px solid var(--border);font-size:12px;color:var(--faint);background:var(--surface);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+footer a{color:var(--accent);text-decoration:none}footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="logo-name"><span>CIL</span>GAR</div>
+    <div class="logo-sub">Cilia Gene Annotation Resource · Mus musculus</div>
+  </div>
+  <div class="hstats">
+    <div class="hstat"><div class="hstat-n" id="st-tot">—</div><div class="hstat-l">Genes</div></div>
+    <div class="hstat"><div class="hstat-n" id="st-ann">—</div><div class="hstat-l">Cilia annotated</div></div>
+    <div class="hstat"><div class="hstat-n" id="st-cil">—</div><div class="hstat-l">Ciliopathy-linked</div></div>
+  </div>
+  <label class="load-btn" for="csv-input">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Load CSV
+  </label>
+  <input type="file" id="csv-input" accept=".csv">
+</header>
+
+<div class="controls" id="ctrl-bar" style="display:none">
+  <div class="sw">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="search" placeholder="Search gene, annotation, function…">
+  </div>
+  <span class="clbl">Localization</span>
+  <select id="fl">
+    <option value="">All</option>
+    <option>Axoneme (tip)</option>
+    <option>Axoneme (base to tip)</option>
+    <option>Axoneme (membrane)</option>
+    <option>Axoneme (ODA)</option>
+    <option>Axoneme (IDA)</option>
+    <option>Axoneme (N-DRC)</option>
+    <option>Axoneme (central pair)</option>
+    <option>Axoneme (radial spoke)</option>
+    <option>Axoneme (inversin compartment)</option>
+    <option>Transition zone</option>
+    <option>Base / BB</option>
+    <option>Base / distal appendage</option>
+    <option>Base / subdistal appendage</option>
+    <option>Base / BB (EVC zone)</option>
+  </select>
+  <span class="clbl">KO effect</span>
+  <select id="fk">
+    <option value="">All</option>
+    <option>Cilia absent</option><option>Shortened</option><option>Immotile</option>
+    <option>Trafficking defect</option><option>TZ defect</option>
+  </select>
+  <span class="clbl">Cilia type</span>
+  <select id="ft">
+    <option value="">All</option><option>Primary</option><option>Motile</option>
+  </select>
+  <button class="ftog" id="ba">Annotated only</button>
+  <button class="ftog" id="bc">Ciliopathy genes</button>
+  <span class="rcount" id="rc"></span>
+</div>
+
+<!-- Cilia Diagram — always visible -->
+<div class="cilia-section">
+  <div style="display:flex;align-items:center;justify-content:space-between"><div class="cilia-title">Cilium anatomy</div><button onclick="toggleDiagram()" id="diag-toggle" style="font-size:11px;color:var(--muted);background:none;border:1px solid var(--border-strong);border-radius:4px;padding:3px 10px;cursor:pointer">Hide ▲</button></div>
+  <div id="diag-body"><div class="cilia-subtitle">Subciliary zones used for gene annotation in CILGAR · hover a zone to filter the table</div>
+  <div class="cilia-diagram-wrap">
+<svg viewBox="0 0 520 300" xmlns="http://www.w3.org/2000/svg" class="cilia-svg" role="img" aria-label="Annotated diagram of cilium zones">
+<defs>
+  <linearGradient id="axG" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#b5d4f4"/><stop offset="100%" stop-color="#d4eaf9"/></linearGradient>
+  <linearGradient id="memG" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#c8e6fa"/><stop offset="100%" stop-color="#e2f0fd"/></linearGradient>
+  <linearGradient id="bbG" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#7fc8a9"/><stop offset="100%" stop-color="#4aab87"/></linearGradient>
+  <linearGradient id="cellG" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#e8f5ee"/><stop offset="100%" stop-color="#d0eadb"/></linearGradient>
+  <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3z" fill="#5a6472"/></marker>
+  <marker id="arr-b" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3z" fill="#185FA5"/></marker>
+  <marker id="arr-t" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3z" fill="#0f6e56"/></marker>
+  <marker id="arr-c" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3z" fill="#9c3520"/></marker>
+  <marker id="arr-p" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3z" fill="#5b42b5"/></marker>
+  <marker id="arr-a" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3z" fill="#8a5d0a"/></marker>
+</defs>
+
+<!-- Cell body -->
+<rect x="70" y="238" width="184" height="52" rx="10" fill="url(#cellG)" stroke="#9FE1CB" stroke-width="1.2"/>
+<text x="162" y="267" text-anchor="middle" font-size="9.5" fill="#0f6e56" font-weight="600">Cell body / cytoplasm</text>
+
+<!-- Basal body -->
+<rect x="110" y="196" width="104" height="46" rx="5" fill="url(#bbG)" stroke="#0f6e56" stroke-width="1.2"/>
+<text x="162" y="213" text-anchor="middle" font-size="9" fill="#fff" font-weight="700">Basal body</text>
+<text x="162" y="226" text-anchor="middle" font-size="7.5" fill="#d0f0e4">mother centriole</text>
+<text x="162" y="237" text-anchor="middle" font-size="7" fill="#c0e8d8">distal / subdistal appendages</text>
+<!-- Appendage ticks -->
+<line x1="110" y1="208" x2="90" y2="202" stroke="#0f6e56" stroke-width="1.5"/>
+<line x1="110" y1="220" x2="90" y2="220" stroke="#0f6e56" stroke-width="1.5"/>
+<line x1="214" y1="208" x2="234" y2="202" stroke="#0f6e56" stroke-width="1.5"/>
+<line x1="214" y1="220" x2="234" y2="220" stroke="#0f6e56" stroke-width="1.5"/>
+
+<!-- Ciliary membrane (outer) -->
+<rect x="144" y="30" width="36" height="168" rx="18" fill="url(#memG)" stroke="#378ADD" stroke-width="1.2" opacity="0.7"/>
+
+<!-- Axoneme (inner) -->
+<rect x="152" y="38" width="20" height="158" rx="4" fill="url(#axG)" stroke="#185FA5" stroke-width="0.8"/>
+
+<!-- MT doublet lines -->
+<line x1="156" y1="44" x2="156" y2="186" stroke="#185FA5" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+<line x1="160" y1="44" x2="160" y2="186" stroke="#185FA5" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+<line x1="164" y1="44" x2="164" y2="186" stroke="#185FA5" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+<line x1="168" y1="44" x2="168" y2="186" stroke="#185FA5" stroke-width="0.7" stroke-dasharray="3,3" opacity="0.5"/>
+
+<!-- Transition zone band -->
+<rect x="144" y="166" width="36" height="32" rx="3" fill="#fceae6" stroke="#9c3520" stroke-width="1.2" opacity="0.92"/>
+<text x="162" y="181" text-anchor="middle" font-size="6.5" fill="#9c3520" font-weight="700">TRANSITION</text>
+<text x="162" y="192" text-anchor="middle" font-size="6.5" fill="#9c3520" font-weight="700">ZONE</text>
+
+<!-- Ciliary tip -->
+<ellipse cx="162" cy="33" rx="16" ry="10" fill="#EEEDFE" stroke="#5b42b5" stroke-width="1.2"/>
+<text x="162" y="37" text-anchor="middle" font-size="7" fill="#5b42b5" font-weight="700">TIP</text>
+
+<!-- ODA brackets (motile) -->
+<rect x="145" y="68" width="4" height="18" rx="1" fill="#f0997b" stroke="#9c3520" stroke-width="0.6"/>
+<rect x="175" y="68" width="4" height="18" rx="1" fill="#f0997b" stroke="#9c3520" stroke-width="0.6"/>
+<rect x="145" y="100" width="4" height="18" rx="1" fill="#f0997b" stroke="#9c3520" stroke-width="0.6"/>
+<rect x="175" y="100" width="4" height="18" rx="1" fill="#f0997b" stroke="#9c3520" stroke-width="0.6"/>
+<rect x="145" y="132" width="4" height="18" rx="1" fill="#f0997b" stroke="#9c3520" stroke-width="0.6"/>
+<rect x="175" y="132" width="4" height="18" rx="1" fill="#f0997b" stroke="#9c3520" stroke-width="0.6"/>
+
+<!-- Central pair dots -->
+<circle cx="158" cy="82" r="2.5" fill="#185FA5" opacity="0.7"/>
+<circle cx="166" cy="82" r="2.5" fill="#185FA5" opacity="0.7"/>
+<circle cx="158" cy="115" r="2.5" fill="#185FA5" opacity="0.7"/>
+<circle cx="166" cy="115" r="2.5" fill="#185FA5" opacity="0.7"/>
+<circle cx="158" cy="148" r="2.5" fill="#185FA5" opacity="0.7"/>
+<circle cx="166" cy="148" r="2.5" fill="#185FA5" opacity="0.7"/>
+
+<!-- Radial spoke -->
+<line x1="152" y1="108" x2="158" y2="108" stroke="#93305a" stroke-width="1.2"/>
+<circle cx="150" cy="108" r="2.2" fill="#fce8f1" stroke="#93305a" stroke-width="0.8"/>
+<line x1="172" y1="115" x2="166" y2="115" stroke="#93305a" stroke-width="1.2"/>
+<circle cx="174" cy="115" r="2.2" fill="#fce8f1" stroke="#93305a" stroke-width="0.8"/>
+
+<!-- IFT particle up -->
+<rect x="154" y="118" width="7" height="12" rx="1.5" fill="#fef3d8" stroke="#8a5d0a" stroke-width="0.8"/>
+<line x1="157" y1="118" x2="157" y2="114" stroke="#8a5d0a" stroke-width="1" marker-end="url(#arr-a)"/>
+
+<!-- IFT particle down -->
+<rect x="163" y="106" width="7" height="12" rx="1.5" fill="#e2f5ef" stroke="#0f6e56" stroke-width="0.8"/>
+<line x1="166" y1="118" x2="166" y2="122" stroke="#0f6e56" stroke-width="1" marker-end="url(#arr-t)"/>
+
+<!-- ===== LEFT LABELS ===== -->
+
+<!-- TIP label -->
+<line x1="144" y1="33" x2="110" y2="24" stroke="#5b42b5" stroke-width="0.8" marker-end="url(#arr-p)"/>
+<rect x="2" y="11" width="104" height="24" rx="4" fill="#eeebfd" stroke="#5b42b5" stroke-width="0.8"/>
+<text x="54" y="21" text-anchor="middle" font-size="8.5" fill="#5b42b5" font-weight="700">Axoneme (tip)</text>
+<text x="54" y="31" text-anchor="middle" font-size="7" fill="#5b42b5">Gli2/3 · KIF7 · ICK · CSPP1</text>
+
+<!-- Ciliary membrane label -->
+<line x1="144" y1="85" x2="112" y2="78" stroke="#378ADD" stroke-width="0.8" marker-end="url(#arr-b)"/>
+<rect x="2" y="64" width="107" height="28" rx="4" fill="#e8f1fb" stroke="#378ADD" stroke-width="0.8"/>
+<text x="55" y="74" text-anchor="middle" font-size="8.5" fill="#185FA5" font-weight="700">Axoneme (membrane)</text>
+<text x="55" y="84" text-anchor="middle" font-size="7" fill="#185FA5">GPCRs · PKD1/2 · SMO · ARL13B</text>
+
+<!-- ODA label -->
+<line x1="145" y1="122" x2="112" y2="128" stroke="#9c3520" stroke-width="0.8" marker-end="url(#arr-c)"/>
+<rect x="2" y="117" width="107" height="24" rx="4" fill="#fceae6" stroke="#9c3520" stroke-width="0.8"/>
+<text x="55" y="127" text-anchor="middle" font-size="8.5" fill="#9c3520" font-weight="700">Axoneme (ODA / IDA / N-DRC)</text>
+<text x="55" y="137" text-anchor="middle" font-size="7" fill="#9c3520">DNAH5 · DNAI1 · GAS8 · CCDC39</text>
+
+<!-- Radial spoke label -->
+<line x1="150" y1="108" x2="112" y2="164" stroke="#93305a" stroke-width="0.8" marker-end="url(#arr)"/>
+<rect x="2" y="155" width="107" height="24" rx="4" fill="#fce8f1" stroke="#93305a" stroke-width="0.8"/>
+<text x="55" y="165" text-anchor="middle" font-size="8.5" fill="#93305a" font-weight="700">Axoneme (radial spoke)</text>
+<text x="55" y="175" text-anchor="middle" font-size="7" fill="#93305a">RSPH1 · RSPH4A · RSPH9</text>
+
+<!-- ===== RIGHT LABELS ===== -->
+
+<!-- Axoneme base-to-tip -->
+<line x1="180" y1="110" x2="212" y2="56" stroke="#185FA5" stroke-width="0.8" marker-end="url(#arr-b)"/>
+<rect x="214" y="36" width="116" height="28" rx="4" fill="#e8f1fb" stroke="#378ADD" stroke-width="0.8"/>
+<text x="272" y="47" text-anchor="middle" font-size="8.5" fill="#185FA5" font-weight="700">Axoneme (base to tip)</text>
+<text x="272" y="57" text-anchor="middle" font-size="7" fill="#185FA5">IFT trains · KIF3A/B · DYNC2H1</text>
+
+<!-- Central pair -->
+<line x1="172" y1="115" x2="212" y2="105" stroke="#185FA5" stroke-width="0.8" marker-end="url(#arr-b)"/>
+<rect x="214" y="92" width="116" height="24" rx="4" fill="#e8f1fb" stroke="#378ADD" stroke-width="0.8"/>
+<text x="272" y="102" text-anchor="middle" font-size="8.5" fill="#185FA5" font-weight="700">Axoneme (central pair)</text>
+<text x="272" y="112" text-anchor="middle" font-size="7" fill="#185FA5">HYDIN · SPAG6 · CFAP54</text>
+
+<!-- Transition zone -->
+<line x1="180" y1="182" x2="212" y2="176" stroke="#9c3520" stroke-width="0.8" marker-end="url(#arr-c)"/>
+<rect x="214" y="162" width="116" height="28" rx="4" fill="#fceae6" stroke="#9c3520" stroke-width="0.8"/>
+<text x="272" y="172" text-anchor="middle" font-size="8.5" fill="#9c3520" font-weight="700">Transition zone</text>
+<text x="272" y="183" text-anchor="middle" font-size="7" fill="#9c3520">CEP290 · NPHP1 · MKS1 · SMIM27</text>
+
+<!-- Inversin compartment -->
+<line x1="180" y1="155" x2="212" y2="136" stroke="#8a5d0a" stroke-width="0.8" marker-end="url(#arr-a)"/>
+<rect x="214" y="122" width="116" height="24" rx="4" fill="#fef3d8" stroke="#8a5d0a" stroke-width="0.8"/>
+<text x="272" y="132" text-anchor="middle" font-size="8.5" fill="#8a5d0a" font-weight="700">Axoneme (inversin zone)</text>
+<text x="272" y="142" text-anchor="middle" font-size="7" fill="#8a5d0a">INVS · ANKS6 · NEK8</text>
+
+<!-- Basal body -->
+<line x1="214" y1="215" x2="214" y2="215" stroke="none"/>
+<line x1="214" y1="212" x2="214" y2="212" stroke="none"/>
+<path d="M214,212 L240,215" stroke="#0f6e56" stroke-width="0.8" marker-end="url(#arr-t)"/>
+<rect x="242" y="200" width="116" height="36" rx="4" fill="#e2f5ef" stroke="#0f6e56" stroke-width="0.8"/>
+<text x="300" y="213" text-anchor="middle" font-size="8.5" fill="#0f6e56" font-weight="700">Basal body / Base</text>
+<text x="300" y="223" text-anchor="middle" font-size="7" fill="#0f6e56">CEP83 · CEP164 · ODF2 · TTBK2</text>
+<text x="300" y="231" text-anchor="middle" font-size="6.5" fill="#0f6e56">distal / subdistal appendages · EVC zone</text>
+
+<!-- Legend bottom -->
+<text x="2" y="290" font-size="7.5" fill="#5a6472" font-style="italic">Primary cilia: 9+0 (no dynein arms, no central pair)</text>
+<text x="2" y="299" font-size="7.5" fill="#5a6472" font-style="italic">Motile cilia: 9+2 (ODA + IDA + radial spokes + central pair)</text>
+
+</svg>
+  </div></div>
+</div>
+
+<div id="upload-zone-wrap">
+  <label class="upload-zone" for="csv-input">
+    <div class="big">📂</div>
+    <strong>Load your CILGAR CSV file</strong>
+    <p>Click here or use the "Load CSV" button above to load <strong>cilgar_genes.csv</strong></p>
+    <p style="margin-top:6px;font-size:12px">137 genes pre-annotated · fill in the rest as you curate the literature</p>
+  </label>
+</div>
+
+<div class="tw" id="tw" style="display:none">
+<table id="gtbl">
+  <thead><tr>
+    <th data-c="Gene">Gene</th>
+    <th data-c="Gene_annotation">Annotation</th>
+    <th data-c="Protein_function">Protein function</th>
+    <th data-c="Cilia_localized">Cilia localized</th>
+    <th data-c="Subciliary_zone">Subciliary zone</th>
+    <th data-c="KO_KD_effect_cell">KO/KD in cells</th>
+    <th data-c="Cell_type_KO">Cell type</th>
+    <th data-c="KO_mouse_phenotype">Mouse KO phenotype</th>
+    <th data-c="Ciliopathy_disease">Ciliopathy / disease</th>
+    <th data-c="IFT_dependency">IFT dependency</th>
+    <th data-c="Cilia_type">Cilia type</th>
+    <th data-c="Protein_interactors">Interactors</th>
+    <th data-c="Reference_PMID">References</th>
+  </tr></thead>
+  <tbody id="tb"></tbody>
+</table>
+<div id="sm" class="smsg" style="display:none"><strong>No genes found</strong>Try adjusting your search or filters.</div>
+</div>
+<div class="pag" id="pg" style="display:none"></div>
+
+<div class="ov" id="ov">
+  <div class="dp">
+    <div class="dph"><div><div class="dpg" id="dp-g"></div><div class="dpa" id="dp-a"></div></div><button class="cls" id="dp-x">✕</button></div>
+    <div id="dp-b"></div>
+  </div>
+</div>
+
+<footer>
+  <span>CILGAR · Cilia Gene Annotation Resource · <em>Mus musculus</em></span>
+  <span>Annotate <strong>cilgar_genes.csv</strong>, reload to update · <a href="https://pubmed.ncbi.nlm.nih.gov" target="_blank">PubMed ↗</a></span>
+</footer>
+
+<script>
+const PS=50;let D=[],F=[],pg=1,sc='Gene',sd=1,ao=false,co=false;
+
+function csv(t){
+  const L=t.split(/\r?\n/),H=cl(L[0]),R=[];
+  for(let i=1;i<L.length;i++){if(!L[i].trim())continue;const v=cl(L[i]),o={};H.forEach((h,x)=>{o[h.trim()]=(v[x]||'').trim();});if(o.Gene)R.push(o);}
+  return R;
+}
+function cl(l){
+  const r=[];let c='',q=false;
+  for(let i=0;i<l.length;i++){const x=l[i];if(x==='"')q=!q;else if(x===','&&!q){r.push(c);c='';}else c+=x;}
+  r.push(c);return r;
+}
+
+function lb(z){
+  if(!z)return'<span class="be">—</span>';
+  const l=z.toLowerCase(),m=l.includes('tip')?'btip':l.includes('base')||l.includes('bb')||l.includes('appendage')?'bbase':l.includes('transition')?'btz':'bax';
+  return`<span class="badge ${m}">${z}</span>`;
+}
+function cb(v){if(!v)return'<span class="be">—</span>';return`<span class="badge ${v==='Yes'?'by':'bn'}">${v}</span>`;}
+function kc(v){if(!v)return'kn';const l=v.toLowerCase();return l.includes('absent')||l.includes('fail')||l.includes('lost')?'ks':l.includes('short')||l.includes('defect')||l.includes('immotile')||l.includes('truncated')?'km':'kn';}
+function db(v){if(!v||v==='—')return'<span class="be">—</span>';return`<span class="badge bdis">${v}</span>`;}
+function ib(v){if(!v||v==='—')return'<span class="be">—</span>';return`<span class="badge bift">${v}</span>`;}
+
+function render(){
+  const tb=document.getElementById('tb');
+  const s=(pg-1)*PS,rows=F.slice(s,s+PS);
+  if(!F.length){tb.innerHTML='';document.getElementById('sm').style.display='block';document.getElementById('pg').style.display='none';return;}
+  document.getElementById('sm').style.display='none';
+  tb.innerHTML=rows.map((r,i)=>{
+    const ann=r.Cilia_localized==='Yes'||r.Cilia_localized==='No';
+    const gu=`https://www.ncbi.nlm.nih.gov/gene?term=${encodeURIComponent(r.Gene)}[Gene+Name]+AND+10090[Taxonomy+ID]`;
+    const pm=r.Reference_PMID?`<a class="pl" href="https://pubmed.ncbi.nlm.nih.gov/${r.Reference_PMID}/" target="_blank" rel="noopener">PMID: ${r.Reference_PMID}</a>${r.Reference_citation?`<span class="cit">${r.Reference_citation}</span>`:''}` : '<span class="be">—</span>';
+    const ga=r.Gene_annotation||'';
+    return`<tr class="${ann?'ann':''}" data-i="${s+i}" style="cursor:pointer">
+      <td class="gc"><a href="${gu}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${r.Gene}</a></td>
+      <td class="ac" title="${ga}">${ga.length>44?ga.slice(0,42)+'…':ga||'—'}</td>
+      <td class="fc">${r.Protein_function||'<span class="be">—</span>'}</td>
+      <td>${cb(r.Cilia_localized)}</td>
+      <td>${lb(r.Subciliary_zone)}</td>
+      <td class="${kc(r.KO_KD_effect_cell)}">${r.KO_KD_effect_cell||'<span class="be">—</span>'}</td>
+      <td style="font-size:12px;color:var(--muted)">${r.Cell_type_KO||'—'}</td>
+      <td style="font-size:12px">${r.KO_mouse_phenotype||'<span class="be">—</span>'}</td>
+      <td>${db(r.Ciliopathy_disease)}</td>
+      <td>${ib(r.IFT_dependency)}</td>
+      <td style="font-size:12px">${r.Cilia_type||'<span class="be">—</span>'}</td>
+      <td style="font-size:12px;color:var(--muted)">${r.Protein_interactors||'—'}</td>
+      <td>${pm}</td>
+    </tr>`;
+  }).join('');
+  tb.querySelectorAll('tr').forEach(r=>r.addEventListener('click',()=>od(F[+r.dataset.i])));
+  rpg();
+}
+
+function rpg(){
+  const total=Math.ceil(F.length/PS),el=document.getElementById('pg');
+  if(total<=1){el.style.display='none';return;}
+  el.style.display='flex';
+  let h=`<button class="pb" onclick="gp(${pg-1})" ${pg===1?'disabled':''}>← Prev</button>`;
+  let s=Math.max(1,pg-2),e=Math.min(total,s+4);
+  if(s>1)h+=`<button class="pb" onclick="gp(1)">1</button>${s>2?'<span class="pi">…</span>':''}`;
+  for(let p=s;p<=e;p++)h+=`<button class="pb ${p===pg?'act':''}" onclick="gp(${p})">${p}</button>`;
+  if(e<total)h+=`${e<total-1?'<span class="pi">…</span>':''}<button class="pb" onclick="gp(${total})">${total}</button>`;
+  h+=`<button class="pb" onclick="gp(${pg+1})" ${pg===total?'disabled':''}>Next →</button>`;
+  h+=`<span class="pi">${F.length.toLocaleString()} genes</span>`;
+  el.innerHTML=h;
+}
+function gp(p){pg=Math.max(1,Math.min(Math.ceil(F.length/PS),p));render();document.querySelector('.tw').scrollTop=0;}
+
+function af(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const fl=document.getElementById('fl').value.toLowerCase();
+  const fk=document.getElementById('fk').value.toLowerCase();
+  const ft=document.getElementById('ft').value.toLowerCase();
+  F=D.filter(r=>{
+    if(ao&&!r.Cilia_localized)return false;
+    if(co&&(!r.Ciliopathy_disease||r.Ciliopathy_disease==='—'))return false;
+    if(q&&!r.Gene.toLowerCase().includes(q)&&!(r.Gene_annotation||'').toLowerCase().includes(q)&&!(r.Protein_function||'').toLowerCase().includes(q))return false;
+    if(fl&&!(r.Subciliary_zone||'').toLowerCase().includes(fl))return false;
+    if(fk&&!(r.KO_KD_effect_cell||'').toLowerCase().includes(fk))return false;
+    if(ft&&!(r.Cilia_type||'').toLowerCase().includes(ft))return false;
+    return true;
+  });
+  F.sort((a,b)=>{const av=(a[sc]||'').toLowerCase(),bv=(b[sc]||'').toLowerCase();return av<bv?-sd:av>bv?sd:0;});
+  pg=1;
+  document.getElementById('rc').textContent=`${F.length.toLocaleString()} results`;
+  render();
+}
+
+document.querySelectorAll('th[data-c]').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const c=th.dataset.c;
+    if(sc===c)sd*=-1;else{sc=c;sd=1;}
+    document.querySelectorAll('th').forEach(t=>t.classList.remove('sa','sd'));
+    th.classList.add(sd===1?'sa':'sd');
+    af();
+  });
+});
+['search','fl','fk','ft'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',af);el.addEventListener('change',af);
+});
+document.getElementById('ba').addEventListener('click',function(){ao=!ao;this.classList.toggle('active',ao);af();});
+document.getElementById('bc').addEventListener('click',function(){co=!co;this.classList.toggle('active',co);af();});
+
+function od(r){
+  document.getElementById('dp-g').textContent=r.Gene;
+  document.getElementById('dp-a').textContent=r.Gene_annotation||'';
+  const gu=`https://www.ncbi.nlm.nih.gov/gene?term=${encodeURIComponent(r.Gene)}[Gene+Name]+AND+10090[Taxonomy+ID]`;
+  const pm=r.Reference_PMID?`<a href="https://pubmed.ncbi.nlm.nih.gov/${r.Reference_PMID}/" target="_blank" style="color:var(--accent)">PMID: ${r.Reference_PMID} ↗</a>`:'—';
+  document.getElementById('dp-b').innerHTML=`
+    <div class="dps"><h4>Identity</h4>
+      <div class="dpr"><span class="drk">Gene (mouse)</span><span class="drv"><a href="${gu}" target="_blank" style="color:var(--accent)">${r.Gene} ↗</a></span></div>
+      <div class="dpr"><span class="drk">Full annotation</span><span class="drv">${r.Gene_annotation||'—'}</span></div>
+      <div class="dpr"><span class="drk">Protein function</span><span class="drv">${r.Protein_function||'—'}</span></div>
+    </div>
+    <div class="dps"><h4>Cilia localization</h4>
+      <div class="dpr"><span class="drk">Localizes to cilia</span><span class="drv">${cb(r.Cilia_localized)}</span></div>
+      <div class="dpr"><span class="drk">Subciliary zone</span><span class="drv">${lb(r.Subciliary_zone)}</span></div>
+      <div class="dpr"><span class="drk">Cilia type</span><span class="drv">${r.Cilia_type||'—'}</span></div>
+      <div class="dpr"><span class="drk">IFT dependency</span><span class="drv">${ib(r.IFT_dependency)}</span></div>
+    </div>
+    <div class="dps"><h4>KO / knockdown phenotype</h4>
+      <div class="dpr"><span class="drk">Effect in cells</span><span class="drv ${kc(r.KO_KD_effect_cell)}">${r.KO_KD_effect_cell||'—'}</span></div>
+      <div class="dpr"><span class="drk">Cell type</span><span class="drv">${r.Cell_type_KO||'—'}</span></div>
+      <div class="dpr"><span class="drk">Mouse KO phenotype</span><span class="drv">${r.KO_mouse_phenotype||'—'}</span></div>
+    </div>
+    <div class="dps"><h4>Disease &amp; interactions</h4>
+      <div class="dpr"><span class="drk">Ciliopathy / disease</span><span class="drv">${r.Ciliopathy_disease&&r.Ciliopathy_disease!=='—'?`<span class="badge bdis">${r.Ciliopathy_disease}</span>`:'—'}</span></div>
+      <div class="dpr"><span class="drk">Protein interactors</span><span class="drv">${r.Protein_interactors||'—'}</span></div>
+    </div>
+    <div class="dps"><h4>Reference</h4>
+      <div class="dpr"><span class="drk">PMID</span><span class="drv">${pm}</span></div>
+      <div class="dpr"><span class="drk">Citation</span><span class="drv">${r.Reference_citation||'—'}</span></div>
+    </div>
+    <p class="ehi">To add or update annotations: edit <strong>cilgar_genes.csv</strong> and reload it with the "Load CSV" button.</p>`;
+  document.getElementById('ov').classList.add('open');
+}
+document.getElementById('dp-x').addEventListener('click',()=>document.getElementById('ov').classList.remove('open'));
+document.getElementById('ov').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
+
+function load(data){
+  D=data;
+  document.getElementById('upload-zone-wrap').style.display='none';
+  document.getElementById('tw').style.display='block';document.getElementById('tw').classList.add('with-diagram');
+  document.getElementById('ctrl-bar').style.display='flex';
+  document.getElementById('pg').style.display='flex';
+  document.getElementById('st-tot').textContent=D.length.toLocaleString();
+  document.getElementById('st-ann').textContent=D.filter(r=>r.Cilia_localized).length.toLocaleString();
+  document.getElementById('st-cil').textContent=D.filter(r=>r.Ciliopathy_disease&&r.Ciliopathy_disease!=='—').length.toLocaleString();
+  af();
+}
+
+document.getElementById('csv-input').addEventListener('change',function(){
+  const f=this.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>load(csv(e.target.result));
+  r.readAsText(f);
+});
+
+function toggleDiagram(){
+  var b=document.getElementById('diag-body');
+  var btn=document.getElementById('diag-toggle');
+  var tw=document.getElementById('tw');
+  if(b.style.display==='none'){
+    b.style.display='';
+    btn.textContent='Hide ▲';
+    if(tw)tw.classList.add('with-diagram');
+  } else {
+    b.style.display='none';
+    btn.textContent='Show diagram ▼';
+    if(tw)tw.classList.remove('with-diagram');
+  }
+}
+</script>
+</body>
+</html>
